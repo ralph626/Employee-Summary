@@ -30,50 +30,80 @@ const specificEmployee = {
       name: "officeNumber",
     },
   ],
-  intern: [],
-  engineer: [],
+  intern: [
+    ...employeeQuestions,
+    {
+      message: "What is this employee's school?",
+      name: "school",
+    },
+  ],
+  engineer: [
+    ...employeeQuestions,
+    {
+      message: "What is this employee's github?",
+      name: "github",
+    },
+  ],
 };
 
 const nextSteps = [
-  {message: "Do you want to add an employee?", name:"addEmployee" type: "confirm"},
   {
-    message: "What type of employee would you like to add?", 
-    name: "type",  
-    type: "choice", 
-    options: ["intern","engineer"],
-    when: givenAnswers => givenAnswers.addEmployee
-  }
+    message: "Do you want to add an employee?",
+    name: "addEmployee",
+    type: "confirm",
+  },
+  {
+    message: "What type of employee would you like to add?",
+    name: "type",
+    type: "list",
+    choices: ["intern", "engineer"],
+    when: (givenAnswers) => givenAnswers.addEmployee,
+  },
 ];
 
 class Program {
   constructor() {
     this.employees = [];
+    this.employeeTypes = {
+      manager: Manager,
+      intern: Intern,
+      engineer: Engineer,
+    };
   }
   async init() {
     // start of program
-    console.log("First, please enter Manger info:")
+    console.log("First, please enter Manger info:");
     await this.addEmployee("manager");
     await this.nextSteps();
-    
   }
-  async nextSteps(){
+  async nextSteps() {
     const next = await inquirer.prompt(nextSteps);
-    if(next.addEmployee){
+    if (next.addEmployee) {
       await this.addEmployee(next.type);
       await this.nextSteps();
     } else {
       writeOutput(render(this.employees));
     }
-  },
+    return true;
+  }
 
   async addEmployee(type) {
     const info = await inquirer.prompt(specificEmployee[type]);
     const keys = Object.keys(info);
-    if (type === "manager") {
-      this.employees.push(
-        new Manager(info.name, info.id, info.email, info[keys[3]])
-      );
-    }
+    this.employees.push(
+      new this.employeeTypes[type](
+        info.name,
+        info.id,
+        info.email,
+        info[keys[3]]
+      ) // new Manager(info.name, info.id, info.email, info.officeNumber)
+    );
+    return true;
+    // if (type === "manager") {
+    //   this.employees.push(
+    //     new Manager(info.name, info.id, info.email, info[keys[3]])
+    //   );
+    // } else if()
   }
 }
 
