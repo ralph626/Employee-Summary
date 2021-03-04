@@ -10,26 +10,82 @@ const outputPath = path.join(OUTPUT_DIR, "team.html");
 
 const render = require("./lib/htmlRenderer");
 
-
 // Write code to use inquirer to gather information about the development team members,
 // and to create objects for each team member (using the correct classes as blueprints!)
+//inquirer logic here\
 
-// After the user has input all employees desired, call the `render` function (required
-// above) and pass in an array containing all employee objects; the `render` function will
-// generate and return a block of HTML including templated divs for each employee!
+// function to initialize program
 
-// After you have your html, you're now ready to create an HTML file using the HTML
-// returned from the `render` function. Now write it to a file named `team.html` in the
-// `output` folder. You can use the variable `outputPath` above target this location.
-// Hint: you may need to check if the `output` folder exists and create it if it
-// does not.
+const employeeQuestions = [
+  { message: "What is this employee's name?", name: "name" },
+  { message: "What is this employee's id?", name: "id" },
+  { message: "What is this employee's email?", name: "email" },
+];
 
-// HINT: each employee type (manager, engineer, or intern) has slightly different
-// information; write your code to ask different questions via inquirer depending on
-// employee type.
+const specificEmployee = {
+  manager: [
+    ...employeeQuestions,
+    {
+      message: "What is this employee's office number?",
+      name: "officeNumber",
+    },
+  ],
+  intern: [],
+  engineer: [],
+};
 
-// HINT: make sure to build out your classes first! Remember that your Manager, Engineer,
-// and Intern classes should all extend from a class named Employee; see the directions
-// for further information. Be sure to test out each class and verify it generates an
-// object with the correct structure and methods. This structure will be crucial in order
-// for the provided `render` function to work! ```
+const nextSteps = [
+  {message: "Do you want to add an employee?", name:"addEmployee" type: "confirm"},
+  {
+    message: "What type of employee would you like to add?", 
+    name: "type",  
+    type: "choice", 
+    options: ["intern","engineer"],
+    when: givenAnswers => givenAnswers.addEmployee
+  }
+];
+
+class Program {
+  constructor() {
+    this.employees = [];
+  }
+  async init() {
+    // start of program
+    console.log("First, please enter Manger info:")
+    await this.addEmployee("manager");
+    await this.nextSteps();
+    
+  }
+  async nextSteps(){
+    const next = await inquirer.prompt(nextSteps);
+    if(next.addEmployee){
+      await this.addEmployee(next.type);
+      await this.nextSteps();
+    } else {
+      writeOutput(render(this.employees));
+    }
+  },
+
+  async addEmployee(type) {
+    const info = await inquirer.prompt(specificEmployee[type]);
+    const keys = Object.keys(info);
+    if (type === "manager") {
+      this.employees.push(
+        new Manager(info.name, info.id, info.email, info[keys[3]])
+      );
+    }
+  }
+}
+
+function writeOutput(html) {
+  fs.writeFileSync(__dirname + "/output/index.html", html, "utf8");
+}
+
+const run = new Program();
+run.init();
+
+// const employees = [
+//   new Manager("Sam Sutton", 1, "ss@email.com", "123456"),
+//   new Intern("Felix the Cat", 2, "fc@email.com", "wyzard school"),
+// ];
+// writeOutput(render(employees));
